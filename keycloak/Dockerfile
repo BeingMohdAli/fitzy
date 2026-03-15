@@ -10,5 +10,3 @@ ENV JAVA_OPTS_APPEND="-Xms64m -Xmx128m"
 COPY fitzy-realm.json /opt/keycloak/data/import/fitzy-realm.json
 
 EXPOSE 8080
-
-CMD ["/opt/keycloak/bin/kc.sh", "start-dev", "--http-port=8080", "--import-realm"]
