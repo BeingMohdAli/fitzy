@@ -1,0 +1,178 @@
+version: "3.9"
+
+services:
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: fitzy-postgres
+    environment:
+      POSTGRES_USER: fitzy
+      POSTGRES_PASSWORD: fitzy123
+      POSTGRES_MULTIPLE_DATABASES: fitzy_users,fitzy_activities,fitzy_recommendations
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/create-databases.sh:/docker-entrypoint-initdb.d/create-databases.sh
+    ports:
+      - "5432:5432"
+    networks:
+      - fitzy-network
+
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: fitzy-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: fitzy
+      RABBITMQ_DEFAULT_PASS: fitzy123
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - fitzy-network
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.3
+    container_name: fitzy-keycloak
+    command: start-dev --import-realm
+    environment:
+      KC_DB: dev-mem
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HTTP_PORT: 8080
+      KC_HOSTNAME_STRICT: "false"
+      KC_HOSTNAME_STRICT_HTTPS: "false"
+      KC_HTTP_ENABLED: "true"
+    volumes:
+      - ./keycloak/fitzy-realm.json:/opt/keycloak/data/import/fitzy-realm.json
+    ports:
+      - "9090:8080"
+    networks:
+      - fitzy-network
+
+  eureka-server:
+    build:
+      context: ./eureka-server
+      dockerfile: Dockerfile
+    container_name: fitzy-eureka
+    ports:
+      - "8761:8761"
+    networks:
+      - fitzy-network
+    restart: on-failure
+
+  config-server:
+    build:
+      context: ./config-server
+      dockerfile: Dockerfile
+    container_name: fitzy-config
+    ports:
+      - "8888:8888"
+    depends_on:
+      - eureka-server
+    networks:
+      - fitzy-network
+    restart: on-failure
+
+  api-gateway:
+    build:
+      context: ./api-gateway
+      dockerfile: Dockerfile
+    container_name: fitzy-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_ISSUER_URI=http://keycloak:8080/realms/fitzy
+      - SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI=http://keycloak:8080/realms/fitzy/protocol/openid-connect/certs
+    depends_on:
+      - config-server
+      - keycloak
+    networks:
+      - fitzy-network
+    restart: on-failure
+
+  user-service:
+    build:
+      context: ./user-service
+      dockerfile: Dockerfile
+    container_name: fitzy-user-service
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/fitzy_users
+      - SPRING_DATASOURCE_USERNAME=fitzy
+      - SPRING_DATASOURCE_PASSWORD=fitzy123
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_USERNAME=fitzy
+      - SPRING_RABBITMQ_PASSWORD=fitzy123
+      - JWT_JWK_SET_URI=http://keycloak:8080/realms/fitzy/protocol/openid-connect/certs
+    depends_on:
+      - postgres
+      - rabbitmq
+      - config-server
+    networks:
+      - fitzy-network
+    restart: on-failure
+
+  activity-service:
+    build:
+      context: ./activity-service
+      dockerfile: Dockerfile
+    container_name: fitzy-activity-service
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/fitzy_activities
+      - SPRING_DATASOURCE_USERNAME=fitzy
+      - SPRING_DATASOURCE_PASSWORD=fitzy123
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_USERNAME=fitzy
+      - SPRING_RABBITMQ_PASSWORD=fitzy123
+      - JWT_JWK_SET_URI=http://keycloak:8080/realms/fitzy/protocol/openid-connect/certs
+    depends_on:
+      - postgres
+      - rabbitmq
+      - config-server
+    networks:
+      - fitzy-network
+    restart: on-failure
+
+  recommendation-service:
+    build:
+      context: ./recommendation-service
+      dockerfile: Dockerfile
+    container_name: fitzy-recommendation-service
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/fitzy_recommendations
+      - SPRING_DATASOURCE_USERNAME=fitzy
+      - SPRING_DATASOURCE_PASSWORD=fitzy123
+      - SPRING_RABBITMQ_HOST=rabbitmq
+      - SPRING_RABBITMQ_USERNAME=fitzy
+      - SPRING_RABBITMQ_PASSWORD=fitzy123
+      - JWT_JWK_SET_URI=http://keycloak:8080/realms/fitzy/protocol/openid-connect/certs
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - GEMINI_API_URL=https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent
+    depends_on:
+      - postgres
+      - rabbitmq
+      - config-server
+    networks:
+      - fitzy-network
+    restart: on-failure
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: fitzy-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - fitzy-network
+    restart: on-failure
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
+
+networks:
+  fitzy-network:
+    driver: bridge

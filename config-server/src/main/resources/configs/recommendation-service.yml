@@ -1,0 +1,36 @@
+server:
+  port: 8083
+
+spring:
+  datasource:
+    url: jdbc:postgresql://postgres:5432/fitzy_recommendations
+    username: fitzy
+    password: fitzy123
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  rabbitmq:
+    host: rabbitmq
+    port: 5672
+    username: fitzy
+    password: fitzy123
+
+gemini:
+  api:
+    key: ${GEMINI_API_KEY:your-gemini-api-key-here}
+    url: https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent
+
+keycloak:
+  auth-server-url: http://keycloak:8080
+  realm: fitzy
+  resource: fitzy-app
+  bearer-only: true
+
+jwt:
+  issuer-uri: http://keycloak:8080/realms/fitzy
+  jwk-set-uri: http://keycloak:8080/realms/fitzy/protocol/openid-connect/certs
