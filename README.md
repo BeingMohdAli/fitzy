@@ -1,4 +1,4 @@
-# 🏋️ FITzy — AI-Powered Fitness Tracker
+# 🏋️ Meet FITzy — AI-Powered Fitness Tracker
 
 A full-stack fitness tracking app with microservices architecture, Keycloak auth, RabbitMQ messaging, and Gemini AI recommendations.
 
@@ -65,14 +65,7 @@ docker compose logs -f
 
 ---
 
-## 👤 Test Users (Pre-configured)
 
-| Username   | Password    | Email                |
-|------------|-------------|----------------------|
-| testuser   | Test@1234   | testuser@fitzy.com   |
-| admin      | Admin@1234  | admin@fitzy.com      |
-
-Keycloak Admin: `admin / admin` at http://localhost:9090
 
 ---
 
@@ -280,3 +273,10 @@ fitzy/
 ├── recommendation-service/
 └── frontend/                     ← React + Vite + Keycloak-js
 ```
+
+👨‍💻 Author
+Mohd Ali
+Java, Spring Boot Backend Developer | GenAI Enthusiast
+
+🌐 GitHub: https://github.com/BeingMohdAli
+💼 Connect me on LinkedIn: https://www.linkedin.com/in/mohd-ali-529684378/
