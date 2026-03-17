@@ -97,7 +97,7 @@ services:
       dockerfile: Dockerfile
     container_name: fitzy-user-service
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/fitzy_users
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://fitzy-postgres:5432/fitzy_users
       - SPRING_DATASOURCE_USERNAME=fitzy
       - SPRING_DATASOURCE_PASSWORD=fitzy123
       - SPRING_RABBITMQ_HOST=rabbitmq
@@ -118,7 +118,7 @@ services:
       dockerfile: Dockerfile
     container_name: fitzy-activity-service
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/fitzy_activities
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://fitzy-postgres:5432/fitzy_activities
       - SPRING_DATASOURCE_USERNAME=fitzy
       - SPRING_DATASOURCE_PASSWORD=fitzy123
       - SPRING_RABBITMQ_HOST=rabbitmq
@@ -139,7 +139,7 @@ services:
       dockerfile: Dockerfile
     container_name: fitzy-recommendation-service
     environment:
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/fitzy_recommendations
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://fitzy-postgres:5432/fitzy_recommendations
       - SPRING_DATASOURCE_USERNAME=fitzy
       - SPRING_DATASOURCE_PASSWORD=fitzy123
       - SPRING_RABBITMQ_HOST=rabbitmq
