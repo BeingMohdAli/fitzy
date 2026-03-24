@@ -160,6 +160,9 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        VITE_KEYCLOAK_URL: http://13.201.168.47:9090
+        VITE_API_BASE_URL: http://13.201.168.47:8080
     container_name: fitzy-frontend
     ports:
       - "80:80"
