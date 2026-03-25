@@ -8,7 +8,7 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_MULTIPLE_DATABASES: fitzy_users,fitzy_activities,fitzy_recommendations
+      POSTGRES_MULTIPLE_DATABASES: fitzy_users,fitzy_activities,fitzy_recommendations,fitzy_keycloak
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts/create-databases.sh:/docker-entrypoint-initdb.d/create-databases.sh
@@ -16,6 +16,11 @@ services:
       - "5432:5432"
     networks:
       - fitzy-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
@@ -36,7 +41,10 @@ services:
     container_name: fitzy-keycloak
     command: start-dev --import-realm
     environment:
-      KC_DB: dev-mem
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://fitzy-postgres:5432/fitzy_keycloak
+      KC_DB_USERNAME: ${POSTGRES_USER}
+      KC_DB_PASSWORD: ${POSTGRES_PASSWORD}
       KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN}
       KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
       KC_HTTP_PORT: 8080
@@ -47,6 +55,9 @@ services:
       - ./keycloak/fitzy-realm.json:/opt/keycloak/data/import/fitzy-realm.json
     ports:
       - "9090:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - fitzy-network
 
